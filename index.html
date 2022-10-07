@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>App Simple</title>
+</head>
+<body>
+	<div>
+		<div class="content"></div>
+		<div>
+			<button id="clear">Limpar</button>
+			<button id="print">Imprimir</button>
+		</div>
+	</div>
+
+	<script type="module">
+		import getProducts from './js/products.js';
+		import print from './js/print.js';
+		const itens = [];
+
+		const app = {
+			products: [],
+			init: async () => {
+				app.products = await getProducts();
+
+				app.methods.load();
+			},
+			update: () => {
+				itens.map((item, index) => {
+					if(item.quantity <= 0) {
+						itens.splice(index, 1);
+						return;
+					}
+
+					return item;
+				});
+
+				app.methods.load();
+			},
+			methods: {
+				load: () => {
+					const html = app.products.map(item => {
+						let quantity = 0;
+						const found = app.methods.itens.find(item.id);
+						if(found) {
+							quantity = found.quantity;
+						}
+
+						return `
+							<div class="item">
+								<div class="item-data">
+									<div class="item-description">
+										${item.description}
+									</div>
+									<div class="item-price">
+										R$ ${item.price.toFixed(2).replace('.', ',')}
+									</div>
+								</div>
+								<div class="item-quantity">
+									<div class="item-alterable-data">
+										<button class="add" data-id="${item.id}">+</button>
+										<input type="number" class="quantity" data-id="${item.id}" value="${quantity}" />
+										<button class="remove" data-id="${item.id}">-</button>
+									</div>
+								</div>
+							</div>
+						`;
+					});
+
+					document.querySelector('.content').innerHTML = html.join('');
+
+					app.methods.register();
+				},
+				register: () => {
+					document.querySelectorAll('.add')
+						.forEach(item => {
+							item.addEventListener('click', () => {
+								const id = item.attributes['data-id'].value;
+								app.methods.itens.add(id);
+								app.update();
+							});
+						});
+
+					document.querySelectorAll('.remove')
+						.forEach(item => {
+							item.addEventListener('click', () => {						
+								const id = item.attributes['data-id'].value;
+								app.methods.itens.delete(id);
+								app.update();
+							});
+						});
+				},
+				itens: {
+					find: id => {
+						return itens.find((item) => item.id == id);
+					},
+					add: id => {
+						const found = app.methods.itens.find(id);
+						if(!found) {
+							itens.push({
+								id,
+								quantity: 1
+							});
+							return;
+						}
+
+						app.methods.itens.increment(id);
+					},
+					increment: id => {
+						itens.map(item => {
+							if(id == item.id) {
+								item.quantity++;
+							}
+
+							return item;
+						});
+					},
+					delete: id => {
+						itens.map(item => {
+							if(id == item.id) {
+								item.quantity--;
+							}
+
+							return item;
+						});
+					},
+					clear: () => itens.splice(0, itens.length)
+				},
+			}
+		};
+
+		document.querySelector('#clear')
+			.addEventListener('click', () => {
+				app.methods.itens.clear();
+
+				app.update();
+			});
+
+		document.querySelector('#print')
+			.addEventListener('click', async () => {
+				const {
+					response,
+					json
+				} = await print(itens);
+
+				if(!response.ok) {
+					console.error('Erro bolado');
+					alert('Erro ao imprimir o Cupom');
+					return;
+				}
+				alert(json.message);
+				app.methods.itens.clear();
+
+				app.update();
+			});
+
+		app.init();
+	</script>
+</body>
+</html>

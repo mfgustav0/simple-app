@@ -1,0 +1,19 @@
+[
+	{
+		"id": 1,
+		"description": "Cerveja",
+		"price": 40
+	},
+	{
+		"id": 2,
+		"description": "Pastel",
+		"image": "",
+		"price": 2
+	},
+	{
+		"id": 3,
+		"description": "Refri",
+		"image": "",
+		"price": 70
+	}
+]
